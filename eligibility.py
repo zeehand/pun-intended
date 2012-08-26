@@ -6,13 +6,14 @@ import fnmatch
 args = sys.argv[1:]
 
 # files to import
-alloc_file = args[0]
-assortment_file = 'assortment_v8.csv'
-box_constraints_file = 'boxconstraints_v8.csv' #
-scores_table = 'soft_constraints_v2.csv'
-already_purchased_file = 'purchasers.csv' # purchased the products list
+path='/Users/dan/Dropbox/Allocation_Models/Womens/2012-08/Python_elig/'
+alloc_file = path + args[0]
+assortment_file = path + 'assortment_v8.csv'
+box_constraints_file = path + 'boxconstraints_v8.csv' #
+scores_table = path + 'soft_constraints_v2.csv'
+already_purchased_file = path + 'purchasers.csv' # purchased the products list
 # haters lists
-output_file = args[1]
+output_file = path + args[1]
 
 
 numboxes = 0
