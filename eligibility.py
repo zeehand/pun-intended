@@ -2,6 +2,7 @@ import csv
 import pdb
 import sys
 import fnmatch
+import random
 
 args = sys.argv[1:]
 
@@ -12,6 +13,7 @@ assortment_file = path + 'assortment_v8.csv'
 box_constraints_file = path + 'boxconstraints_v8.csv' #
 scores_table = path + 'soft_constraints_v2.csv'
 already_purchased_file = path + 'purchasers.csv' # purchased the products list
+feedback_points_file = path + 'feedback.csv'
 # haters lists
 output_file = path + args[1]
 
@@ -224,6 +226,22 @@ for row in myreader:
 file.close()
 
 
+#**** READ IN ADDITIONAL POINT INCREMENTS BASED ON FEEDBACK ******
+
+feedback_points = {} # dict of customer_id -> {inner dict of product -> points}
+
+file = open(feedback_points_file, 'rb')
+myreader = csv.reader(file)
+header = myreader.next()
+for row in myreader:
+	feedback_points[row[0]]={}
+	for i in range(1,len(row)):
+		if row[i] != 0:
+			feedback_points[row[0]][header[i]] = row[i]
+
+file.close()
+
+
 # ******** HARD CONSTRAINTS *************
 
 print 'Running all subscribers through eligibility...'
@@ -372,10 +390,10 @@ for sub in people:
 	if 'Stretch' not in conc and 'mother' not in other:
 		e['58'] = e['58'] + inf
 
-
+	cust_id = cur_pers.traits['customer_id']
 #  PURHCASED THE PRODUCT
-	if cur_pers.traits['customer_id'] in purchase_list:
-		their_buys = purchase_list[cur_pers.traits['customer_id']]
+	if cust_id in purchase_list:
+		their_buys = purchase_list[cust_id]
 		for prod in their_buys:
 			cur_pers.prod_elig[prod] = inf
 			#print 'customer ' + cur_pers.traits['customer_id'] + ' purchased product ' + prod
@@ -400,6 +418,18 @@ for sub in people:
 				#	print 'new total for that product is ' + str(cur_pers.prod_elig[con.sample_id])
 				con.num_affected = con.num_affected + 1
 		#else: print "Error: " + con.question + ' not found in traits'
+
+# SOFT CONSTRAINT POINTS FOR FEEDBACK
+	if cust_id in feedback_points:
+		if random.random() < 0.5:
+			cur_pers.traits['points_test'] = 'included'
+			for p in feedback_points[cust_id]:
+				pointval = int(feedback_points[cust_id][p])
+				if p not in cur_pers.prod_elig:
+					cur_pers.prod_elig[p] = 0
+				cur_pers.prod_elig[p] = cur_pers.prod_elig[p] + pointval
+		else: cur_pers.traits['points_test'] = 'excluded'
+	else: cur_pers.traits['points_test'] = 'no feedback'
 
 
 
@@ -428,10 +458,10 @@ for sub in people:
 
 #	print sub + ' is eligible for ' + str(elig_boxes) + ' boxes'
 	
-#  MAKE BB1 THE ANYONE BOX
+#  MAKE BB1 THE ANYONE BOX -- not for september
 
 	#if cur_pers.box_elig['1'] > fail_score and elig_boxes <= 1:
-	cur_pers.box_elig['1'] = 0
+#	cur_pers.box_elig['1'] = 0
 
 
 #  PRINT STATUS 
@@ -472,6 +502,7 @@ for pers in people:
 				row.append('NULL')
 			else: 
 				row.append(cur_pers.box_elig[str(box)])
+	row.append(cur_pers.traits['points_test'])
 	output_writer.writerow(row)
 #	print row
 file.close()
