@@ -23,8 +23,36 @@ class MainPage(Handler):
    
     def get(self):
         self.render("home.html")
-    
-  
+
+class blog(Handler):
+    def get(self, username=""):
+        self.render("blog.html", username=username)
+
+class onepost(Handler):
+    def get(self, postid):
+        title = 'dan\'s post #' + postid
+        blogp = 'hello world'
+        created = 'May 10, 2012'
+        username = 'dan'
+        self.render("onepost.html", username=username, title=title, blogp=blogp, created=created)
+
+class newpost(Handler):
+    def write_form(self, title="", blogp="", error=""):
+        self.render('newpost.html', title=title, blogp=blogp, error=error) 
+
+    def get(self):
+        self.write_form()
+
+    def post(self):
+        title = self.request.get('subject')
+        blogp = self.request.get('content')
+        self.write_form(title, blogp, '')
+
+class blogp(db.Model):
+    title = db.StringProperty(required = True)
+    content = db.TextProperty(required = True)
+    created_at = db.DateTimeProperty(auto_now_add = True)
+    #url = db.
 
 class rot13(Handler):
     def write_form(self, input=""):
@@ -93,12 +121,6 @@ class signup(Handler):
         else:
             self.write_form(name, '', '', email, err1, err2, err3, err4)
 
-class TestHandler(webapp2.RequestHandler):
-    def post(self):
-        #q = self.request.get("q")
-        #self.response.out.write(q)
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write(self.request)
 
 class welcome(Handler):
     def get(self):
@@ -107,10 +129,12 @@ class welcome(Handler):
         self.render("welcomemsg.html", name=name)
 
 application = webapp2.WSGIApplication([('/', MainPage),
-                                      ('/testform', TestHandler),
-                                      ('/rot13', rot13),
+                                       ('/rot13', rot13),
                                       ('/signup',signup),
-                                      ('/welcome',welcome)],
+                                      ('/welcome',welcome),
+                                      ('/blog',blog),
+                                      ('/blog/newpost',newpost),
+                                      webapp2.Route('/blog/<postid>', handler=onepost, name="title")],
                                      debug=True)
 
 def main():

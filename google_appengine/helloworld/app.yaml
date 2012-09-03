@@ -1,8 +1,0 @@
-application: zeehandelaar1
-version: 4
-runtime: python
-api_version: 1
-
-handlers:
-- url: /.*
-  script: helloworld.py
