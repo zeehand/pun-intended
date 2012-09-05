@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+
+  <title>Pun Intended Blog</title>
+</head>
+
+<body>
+  <a href="/blog" class="main-title">
+    Pun Intended Blog
+  </a>
+
+  <div class="login-area">
+    
+      {{username}} (<a class="login-link" href="/logout">logout</a>)
+    
+  </div>
+
+  <div id="content">
+  
+{% for post in posts %}
+  
+    <div class="post">
+  <div class="post-heading">
+    <a href="/blog/{{post.identifier}}" class="post-title">
+      {{post.title}}
+    </a>
+
+    <div class="post-date">
+      {{post.created_at}}
+    </div>
+  </div>
+
+  <div class="post-content">
+    {{post.content}}
+  </div>
+{% endfor %}
+</div>
+<br><br>
+<a href="/">Root directory</a>
+</body>
+
+</html>

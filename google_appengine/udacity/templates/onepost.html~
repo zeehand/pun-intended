@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+
+  <title>Pun Intended Blog</title>
+</head>
+
+<body>
+  <a href="/blog" class="main-title">
+    Pun Intended Blog
+  </a>
+
+  <div class="login-area">
+    
+      {{username}} (<a class="login-link" href="/logout">logout</a>)
+    
+  </div>
+
+  <div id="content">
+  
+
+  
+    <div class="post">
+  <div class="post-heading">
+    <a href="/blog/20002" class="post-title">
+      {{title}}
+    </a>
+
+    <div class="post-date">
+      {{created}}
+    </div>
+  </div>
+
+  <div class="post-content">
+    {{blogp}}
+  </div>
+</div>
+<br><br>
+<a href="/">Root directory</a>
+</body>
+
+</html>
