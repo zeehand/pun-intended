@@ -1,8 +1,10 @@
+#! /Library/Frameworks/Python.framework/Versions/2.7/bin/python2.7
+
 import webapp2
-from google.appengine.ext.webapp.util import run_wsgi_app
+#from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 import os
-import cgi
+#import cgi
 import re
 import jinja2
 
@@ -135,7 +137,7 @@ class welcome(Handler):
         name = str(self.request.get('username'))
         self.render("welcomemsg.html", name=name)
 
-application = webapp2.WSGIApplication([('/', MainPage),
+app = webapp2.WSGIApplication([('/', MainPage),
                                        ('/rot13', rot13),
                                       ('/signup',signup),
                                       ('/welcome',welcome),
@@ -144,8 +146,8 @@ application = webapp2.WSGIApplication([('/', MainPage),
                                       webapp2.Route('/blog/<postid>', handler=onepost, name="title")],
                                      debug=True)
 
-def main():
-    run_wsgi_app(application)
+#def main():
+#    run_wsgi_app(application)
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()

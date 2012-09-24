@@ -1,12 +1,16 @@
 application: zeehandelaar1
 version: 5
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 handlers:
 - url: /stylesheets
   static_dir: stylesheets
 
 - url: /.*
-  script: udacity_assignments.py
+  script: udacity_assignments.app
 
+libraries:
+- name: jinja2
+  version: latest

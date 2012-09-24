@@ -1,8 +1,8 @@
 import webapp2
-from google.appengine.ext.webapp.util import run_wsgi_app
+#from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 import os
-import cgi
+#import cgi
 import re
 import jinja2
 
@@ -26,15 +26,17 @@ class MainPage(Handler):
 
 class blog(Handler):
     def get(self, username=""):
-        self.render("blog.html", username=username)
+        posts = db.GqlQuery('select * from blogp order by created_at desc')
+        self.render("blog.html", username=username, posts=posts)
 
 class onepost(Handler):
     def get(self, postid):
-        title = 'dan\'s post #' + postid
-        blogp = 'hello world'
-        created = 'May 10, 2012'
+        entity = blogp.get_by_id(int(postid))
+        title = entity.title
+        content = entity.content 
+        created = entity.created_at
         username = 'dan'
-        self.render("onepost.html", username=username, title=title, blogp=blogp, created=created)
+        self.render("onepost.html", id=postid, username=username, title=title, content=content, created=created)
 
 class newpost(Handler):
     def write_form(self, title="", blogp="", error=""):
@@ -45,8 +47,13 @@ class newpost(Handler):
 
     def post(self):
         title = self.request.get('subject')
-        blogp = self.request.get('content')
-        self.write_form(title, blogp, '')
+        content = self.request.get('content')
+        if title and content:
+            entry = blogp(title=title, content=content)
+            entry.put()
+            self.redirect('/blog/'+str(entry.key().id()))
+#        self.write_form(title, blogp, '')
+        else: self.write_form(title, content, '')
 
 class blogp(db.Model):
     title = db.StringProperty(required = True)
@@ -137,8 +144,8 @@ application = webapp2.WSGIApplication([('/', MainPage),
                                       webapp2.Route('/blog/<postid>', handler=onepost, name="title")],
                                      debug=True)
 
-def main():
-    run_wsgi_app(application)
+#def main():
+#    run_wsgi_app(application)
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()
