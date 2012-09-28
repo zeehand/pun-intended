@@ -1,3 +1,5 @@
+#! /Library/Frameworks/Python.framework/Versions/2.7/bin/python2.7
+
 import webapp2
 #from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
@@ -135,7 +137,7 @@ class welcome(Handler):
         name = str(self.request.get('username'))
         self.render("welcomemsg.html", name=name)
 
-application = webapp2.WSGIApplication([('/', MainPage),
+app = webapp2.WSGIApplication([('/', MainPage),
                                        ('/rot13', rot13),
                                       ('/signup',signup),
                                       ('/welcome',welcome),
