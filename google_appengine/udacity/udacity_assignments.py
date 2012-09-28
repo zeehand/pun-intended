@@ -116,9 +116,9 @@ class signup(Handler):
             
             user = users(username=name, pw_hash=make_user_hash(name, pw1)) 
             user.put()
-            name = user.key().id()
-
-#self.response.headers.add_header()  # FIXX
+            user_id = user.key().id()
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.headers.add_header('Set-Cookie', 'user_id=%s' % user_id)  # FIXX
             self.redirect('/welcome?username=%s' % name)
         else:
             self.write_form(name, '', '', email, errors[0], errors[1], errors[2], errors[3])
