@@ -7,6 +7,9 @@ import os
 #import cgi
 import re
 import jinja2
+import string
+import random
+import hashlib
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape=True)
@@ -87,6 +90,12 @@ class rot13(Handler):
                 s = s[:i] + uppers[(uppers.find(s[i])+13) % 26] + s[i+1:]
         return s
 
+class users(db.Model):
+    #user_id = db.IntegerProperty(required = True)
+    username = db.StringProperty(required = True)
+    pw_hash = db.StringProperty(required = True)
+
+
 class signup(Handler):
     
     def write_form(self, user="", pw1="", pw2="", email="", err1="", err2="", err3="", err4=""):
@@ -102,34 +111,55 @@ class signup(Handler):
         pw2 = self.request.get('verify')
         email = self.request.get('email')
         
-        err1 = ''
-        err2 = ''
-        err3 = ''
-        err4 = ''
-
-        allok = True
-        
-        if not re.match("^[a-zA-Z0-9_-]{3,20}$",name):
-            allok = False
-            err1 = 'That\'s not a valid username.'
-        
-        if not re.match("^.{3,20}$",pw1):
-            allok = False
-            err2 = 'That\'s not a valid password.'
-
-        if pw1 != pw2:
-            allok = False
-            err3 = 'Your passwords didn\'t match'
+        errors = check_input(name, pw1, pw2, email)
+        if errors == ['','','','']:
             
-        if not re.match("^[\S]+@[\S]+\.[\S]+$",email) and email !='':
-            allok = False
-            err4 = 'That\'s not a valid email.'
+            user = users(username=name, pw_hash=make_user_hash(name, pw1)) 
+            user.put()
+            name = user.key().id()
 
-        if allok:
+#self.response.headers.add_header()  # FIXX
             self.redirect('/welcome?username=%s' % name)
         else:
-            self.write_form(name, '', '', email, err1, err2, err3, err4)
+            self.write_form(name, '', '', email, errors[0], errors[1], errors[2], errors[3])
 
+
+
+def check_input(name, pw1, pw2, email):
+    #allok = True
+    errors=['','','','']
+
+    if not re.match("^[a-zA-Z0-9_-]{3,20}$",name):
+        #allok = False
+        errors[0] = 'That\'s not a valid username.'
+
+    if not re.match("^.{3,20}$",pw1):
+        #allok = False
+        errors[1] = 'That\'s not a valid password.'
+
+    if pw1 != pw2:
+        #allok = False
+        errors[2] = 'Your passwords didn\'t match'
+
+    if not re.match("^[\S]+@[\S]+\.[\S]+$",email) and email !='':
+        #allok = False
+        errors[3] = 'That\'s not a valid email.'
+
+    return errors
+
+ 
+def make_salt():
+    return ''.join(random.choice(string.letters) for x in xrange(5))
+
+def make_user_hash(name, pw, salt=None):
+    if not salt:
+        salt=make_salt()
+    h = hashlib.sha256(name + pw + salt).hexdigest()
+    return '%s,%s' % (h, salt)
+
+def valid_pw(name, pw, h):
+    salt = h.split(',')[1]
+    return h == make_pw_hash(name, pw, salt)
 
 class welcome(Handler):
     def get(self):
