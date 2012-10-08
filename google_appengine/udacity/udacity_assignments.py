@@ -13,6 +13,7 @@ import hashlib
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape=True)
+SECRET = 'dan'
 
 
 class Handler(webapp2.RequestHandler):
@@ -27,6 +28,15 @@ class Handler(webapp2.RequestHandler):
 class MainPage(Handler):
    
     def get(self):
+        #self.response.headers['Content-Type'] = 'text/plain'
+        #visits = ''
+        #visits = self.request.cookies.get('visits', '0')
+        #if visits.isdigit():
+        #    visits = int(visits) + 1
+        #else:
+        #    visits = 0
+        #self.response.headers.add_header('Set-Cookie', 'visits=%s' % visits)
+
         self.render("home.html")
 
 class blog(Handler):
@@ -94,6 +104,7 @@ class users(db.Model):
     #user_id = db.IntegerProperty(required = True)
     username = db.StringProperty(required = True)
     pw_hash = db.StringProperty(required = True)
+    salt = db.StringProperty(required = True)
 
 
 class signup(Handler):
@@ -113,12 +124,16 @@ class signup(Handler):
         
         errors = check_input(name, pw1, pw2, email)
         if errors == ['','','','']:
-            
-            user = users(username=name, pw_hash=make_user_hash(name, pw1)) 
+            #check if user exists
+            salt = make_salt()
+            print salt
+            user = users(username=name, pw_hash=make_user_hash(name, pw1, salt), salt=salt) 
             user.put()
             user_id = user.key().id()
-            self.response.headers['Content-Type'] = 'text/plain'
-            self.response.headers.add_header('Set-Cookie', 'user_id=%s' % user_id)  # FIXX
+            #print user_id
+            #self.response.headers['Content-Type'] = 'text/plain'
+            cookie = make_cookie_hash(user_id, salt)
+            self.response.headers.add_header('Set-Cookie', 'user_id=%s' % cookie)  # FIXX
             self.redirect('/welcome?username=%s' % name)
         else:
             self.write_form(name, '', '', email, errors[0], errors[1], errors[2], errors[3])
@@ -156,6 +171,10 @@ def make_user_hash(name, pw, salt=None):
         salt=make_salt()
     h = hashlib.sha256(name + pw + salt).hexdigest()
     return '%s,%s' % (h, salt)
+
+def make_cookie_hash(user_id, salt):
+    h = hashlib.sha256(str(user_id) + salt).hexdigest()
+    return '%s|%s' % (user_id, h)
 
 def valid_pw(name, pw, h):
     salt = h.split(',')[1]
