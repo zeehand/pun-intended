@@ -104,7 +104,7 @@ class users(db.Model):
     #user_id = db.IntegerProperty(required = True)
     username = db.StringProperty(required = True)
     pw_hash = db.StringProperty(required = True)
-    salt = db.StringProperty(required = True)
+    salt = db.StringProperty(required = False)
 
 
 class signup(Handler):
@@ -124,9 +124,8 @@ class signup(Handler):
         
         errors = check_input(name, pw1, pw2, email)
         if errors == ['','','','']:
-            #check if user exists
             salt = make_salt()
-            print salt
+            #print salt
             user = users(username=name, pw_hash=make_user_hash(name, pw1, salt), salt=salt) 
             user.put()
             user_id = user.key().id()
@@ -134,7 +133,7 @@ class signup(Handler):
             #self.response.headers['Content-Type'] = 'text/plain'
             cookie = make_cookie_hash(user_id, salt)
             self.response.headers.add_header('Set-Cookie', 'user_id=%s' % cookie)  # FIXX
-            self.redirect('/welcome?username=%s' % name)
+            self.redirect('/welcome')
         else:
             self.write_form(name, '', '', email, errors[0], errors[1], errors[2], errors[3])
 
@@ -147,7 +146,12 @@ def check_input(name, pw1, pw2, email):
     if not re.match("^[a-zA-Z0-9_-]{3,20}$",name):
         #allok = False
         errors[0] = 'That\'s not a valid username.'
+    else:
+        dup_user = db.GqlQuery('select * from users where username = \'%s\'' % name).run()
+        for user in dup_user:
+            errors[0] = 'Username is not available'
 
+ 
     if not re.match("^.{3,20}$",pw1):
         #allok = False
         errors[1] = 'That\'s not a valid password.'
@@ -160,6 +164,7 @@ def check_input(name, pw1, pw2, email):
         #allok = False
         errors[3] = 'That\'s not a valid email.'
 
+   
     return errors
 
  
@@ -182,8 +187,8 @@ def valid_pw(name, pw, h):
 
 class welcome(Handler):
     def get(self):
-        name = ''
-        name = str(self.request.get('username'))
+        name = 'test'
+        #name = str(self.request.get('username'))
         self.render("welcomemsg.html", name=name)
 
 app = webapp2.WSGIApplication([('/', MainPage),
