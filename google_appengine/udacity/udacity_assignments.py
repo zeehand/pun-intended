@@ -132,7 +132,7 @@ class signup(Handler):
             #print user_id
             #self.response.headers['Content-Type'] = 'text/plain'
             cookie = make_cookie_hash(user_id, salt)
-            self.response.headers.add_header('Set-Cookie', 'user_id=%s' % cookie)  # FIXX
+            self.response.headers.add_header('Set-Cookie', 'user_id=%s; Path=/' % cookie)  # FIXX
             self.redirect('/welcome')
         else:
             self.write_form(name, '', '', email, errors[0], errors[1], errors[2], errors[3])
@@ -185,11 +185,22 @@ def valid_pw(name, pw, h):
     salt = h.split(',')[1]
     return h == make_pw_hash(name, pw, salt)
 
+#def valid_user_cookie(user_id, cookie):
+ #   
+  #  return make_cookie_hash(user_id, user.salt) == cookie
+    
+
 class welcome(Handler):
     def get(self):
-        name = 'test'
+        #name = 'test'
+        user_cookie = self.request.cookies.get('user_id')
+        user_id = user_cookie.split('|')[0]
+        user = users.get_by_id(int(user_id))
+        if user_cookie == make_cookie_hash(user_id, user.salt):
         #name = str(self.request.get('username'))
-        self.render("welcomemsg.html", name=name)
+            self.render("welcomemsg.html", name=user.username)
+        else:
+            self.redirect('/')
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                        ('/rot13', rot13),
