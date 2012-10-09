@@ -160,8 +160,11 @@ class login(Handler):
                 self.response.headers.add_header('Set-Cookie', 'user_id=%s; Path=/' % cookie)  # FIXX
                 self.redirect('/welcome')
         self.write_form(name, '', err1, err2)
-    
 
+class logout(Handler):
+    def get(self):
+        self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
+        self.redirect('/signup')
 
 def check_input(name, pw1, pw2, email):
     #allok = True
@@ -218,11 +221,16 @@ class welcome(Handler):
     def get(self):
         #name = 'test'
         user_cookie = self.request.cookies.get('user_id')
-        user_id = user_cookie.split('|')[0]
-        user = users.get_by_id(int(user_id))
-        if user and user_cookie == make_cookie_hash(user_id, user.salt):
-        #name = str(self.request.get('username'))
-            self.render("welcomemsg.html", name=user.username)
+        if '|' in user_cookie:
+            user_id = user_cookie.split('|')[0]
+            if user_id.isdigit():
+                user = users.get_by_id(int(user_id))
+                if user and user_cookie == make_cookie_hash(user_id, user.salt):
+                   self.render("welcomemsg.html", name=user.username)
+                else:
+                    self.redirect('/signup')           
+            else:
+                self.redirect('/signup')
         else:
             self.redirect('/signup')
 
@@ -233,6 +241,7 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                       ('/blog',blog),
                                       ('/blog/newpost',newpost),
                                       ('/login',login),
+                                      ('/logout',logout),
                                       webapp2.Route('/blog/<postid>', handler=onepost, name="title")],
                                      debug=True)
 
