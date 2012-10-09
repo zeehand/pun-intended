@@ -105,6 +105,7 @@ class users(db.Model):
     username = db.StringProperty(required = True)
     pw_hash = db.StringProperty(required = True)
     salt = db.StringProperty(required = False)
+    email = db.StringProperty(required = False)
 
 
 class signup(Handler):
@@ -126,7 +127,7 @@ class signup(Handler):
         if errors == ['','','','']:
             salt = make_salt()
             #print salt
-            user = users(username=name, pw_hash=make_user_hash(name, pw1, salt), salt=salt) 
+            user = users(username=name, pw_hash=make_user_hash(name, pw1, salt), salt=salt, email=email) 
             user.put()
             user_id = user.key().id()
             #print user_id
@@ -137,6 +138,29 @@ class signup(Handler):
         else:
             self.write_form(name, '', '', email, errors[0], errors[1], errors[2], errors[3])
 
+class login(Handler):
+
+    def write_form(self, user="", pw1="", err1="", err2=""):
+        self.render("login.html", user=user, pw1=pw1, err1=err1, err2=err2)
+ 
+    def get(self):
+        self.write_form()
+
+    def post(self):
+        name = self.request.get('username')
+        pw1 = self.request.get('password')
+        err1 = 'Invalid Username'
+        err2 = 'Incorrect Password'
+        user_entity = db.GqlQuery('select * from users where username = \'%s\'' % name).run()
+        for user in user_entity:
+            err1 = ''
+            if valid_pw(name, pw1, user.pw_hash):
+                err2 = ''
+                cookie = make_cookie_hash(user.key().id(), user.salt)
+                self.response.headers.add_header('Set-Cookie', 'user_id=%s; Path=/' % cookie)  # FIXX
+                self.redirect('/welcome')
+        self.write_form(name, '', err1, err2)
+    
 
 
 def check_input(name, pw1, pw2, email):
@@ -149,7 +173,7 @@ def check_input(name, pw1, pw2, email):
     else:
         dup_user = db.GqlQuery('select * from users where username = \'%s\'' % name).run()
         for user in dup_user:
-            errors[0] = 'Username is not available'
+            errors[0] = 'That user already exists'
 
  
     if not re.match("^.{3,20}$",pw1):
@@ -178,12 +202,12 @@ def make_user_hash(name, pw, salt=None):
     return '%s,%s' % (h, salt)
 
 def make_cookie_hash(user_id, salt):
-    h = hashlib.sha256(str(user_id) + salt).hexdigest()
+    h = hashlib.sha256('%s%s' % (user_id, salt)).hexdigest()
     return '%s|%s' % (user_id, h)
 
 def valid_pw(name, pw, h):
     salt = h.split(',')[1]
-    return h == make_pw_hash(name, pw, salt)
+    return h == make_user_hash(name, pw, salt)
 
 #def valid_user_cookie(user_id, cookie):
  #   
@@ -196,11 +220,11 @@ class welcome(Handler):
         user_cookie = self.request.cookies.get('user_id')
         user_id = user_cookie.split('|')[0]
         user = users.get_by_id(int(user_id))
-        if user_cookie == make_cookie_hash(user_id, user.salt):
+        if user and user_cookie == make_cookie_hash(user_id, user.salt):
         #name = str(self.request.get('username'))
             self.render("welcomemsg.html", name=user.username)
         else:
-            self.redirect('/')
+            self.redirect('/signup')
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                        ('/rot13', rot13),
@@ -208,6 +232,7 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                       ('/welcome',welcome),
                                       ('/blog',blog),
                                       ('/blog/newpost',newpost),
+                                      ('/login',login),
                                       webapp2.Route('/blog/<postid>', handler=onepost, name="title")],
                                      debug=True)
 
