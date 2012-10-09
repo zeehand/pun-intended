@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+    
+    <title>Login</title>
+ 
+</head>
+
+<body>
+    <div class="main-title">Login</div>
+    <form method="post">
+      <table>
+        <tr>
+          <td class="label">
+            Username
+          </td>
+          <td>
+            <input type="text" name="username" value="{{user}}">
+          </td>
+          <td class="error">{{err1}}
+            
+          </td>
+        </tr>
+
+        <tr>
+          <td class="label">
+            Password
+          </td>
+          <td>
+            <input type="password" name="password" value="{{pw1}}">
+          </td>
+          <td class="error">{{err2}}
+            
+          </td>
+        </tr>
+      </table>
+
+      <input type="submit">
+    </form>
+  <a href="/">Home</a>
+  </body>
+
+</html>
