@@ -46,12 +46,20 @@ class blog(Handler):
 
 class onepost(Handler):
     def get(self, postid):
-        entity = blogp.get_by_id(int(postid))
-        title = entity.title
-        content = entity.content 
-        created = entity.created_at
-        username = 'dan'
-        self.render("onepost.html", id=postid, username=username, title=title, content=content, created=created)
+        if str(postid).isdigit():
+            entity = blogp.get_by_id(int(postid))
+            if entity:
+                title = entity.title
+                content = entity.content 
+                created = entity.created_at
+                username = 'dan'
+                self.render("onepost.html", id=postid, username=username, title=title, content=content, created=created)
+            else:
+                self.redirect('/blog')
+        else:
+            self.redirect('/blog')
+
+
 
 class newpost(Handler):
     def write_form(self, title="", blogp="", error=""):
@@ -133,7 +141,7 @@ class signup(Handler):
             #print user_id
             #self.response.headers['Content-Type'] = 'text/plain'
             cookie = make_cookie_hash(user_id, salt)
-            self.response.headers.add_header('Set-Cookie', 'user_id=%s; Path=/' % cookie)  # FIXX
+            self.response.headers.add_header('Set-Cookie', 'user_id=%s; Path=/' % cookie)
             self.redirect('/welcome')
         else:
             self.write_form(name, '', '', email, errors[0], errors[1], errors[2], errors[3])
@@ -151,8 +159,10 @@ class login(Handler):
         pw1 = self.request.get('password')
         err1 = 'Invalid Username'
         err2 = 'Incorrect Password'
-        user_entity = db.GqlQuery('select * from users where username = \'%s\'' % name).run()
-        for user in user_entity:
+        #user_entity = db.GqlQuery('select * from users where username = \'%s\'' % name).run()
+        #for user in user_entity:
+        user = users.all().filter('username =', name).get()
+        if user:
             err1 = ''
             if valid_pw(name, pw1, user.pw_hash):
                 err2 = ''
